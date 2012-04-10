@@ -1,0 +1,10 @@
+7 5     # board
+3 2 1   # ship
+1 6     # insts
+1 1     # paint
+
+b b b b b b b
+b b b b b b b
+b B b b b B b
+b b b b b b b
+b b b b b b b

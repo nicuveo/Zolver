@@ -1,0 +1,32 @@
+## configure.in
+## Made by nicuveo for zolver
+
+
+
+## Configuration
+profile: release
+
+
+## Defaults
+CC	= g++
+CFLAGS	= -W -Wall -Wextra
+DFLAGS  = -DDEBUG
+LDFLAGS = -lboost_program_options
+
+
+## Debug
+[debug]
+	CFLAGS  += $(DFLAGS) -g3 -ggdb3
+	LDFLAGS += -g3 -ggdb3
+
+## Check
+[check]
+	CFLAGS  += $(DFLAGS) -ansi -pedantic -Werror
+
+## Release
+[release]
+	CFLAGS  += -DNDEBUG -O3 -fomit-frame-pointer
+
+## Profiling
+[profiling]
+	CFLAGS  += -DNDEBUG -O2 -g3 -ggdb3

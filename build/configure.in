@@ -1,0 +1,22 @@
+## configure.in
+## Made by nicuveo for zolver
+
+CFIL =                        \
+  ../src/cell.cc              \
+  ../src/game.cc              \
+  ../src/main.cc              \
+  ../src/ship.cc              \
+  ../src/board.cc             \
+  ../src/color.cc             \
+  ../src/point.cc             \
+  ../src/action.cc            \
+  ../src/solver.cc            \
+  ../src/parser.cc            \
+  ../src/options.cc           \
+  ../src/program.cc           \
+  ../src/direction.cc         \
+  ../src/processor.cc         \
+  ../src/basic_solver.cc      \
+  ../src/iterative_solver.cc  \
+
+TARGET = $(EXE)

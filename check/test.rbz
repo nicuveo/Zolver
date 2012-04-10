@@ -1,0 +1,9 @@
+4 4             # board: x, y
+1 0 1           # ship: x, y, direction
+1 3             # instructions: n, [n1...]
+0               # paint: n, [p1...]
+
+R b g R
+b g b g
+g b g b
+R g b R
