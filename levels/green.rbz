@@ -1,0 +1,19 @@
+# http://robozzle.com/js/play.aspx?puzzle=790
+
+16 12   # board: x, y
+2 2 1   # ship: x, y, direction
+1 10    # instructions: n, [n1...]
+0       # paint: n, [p1...]
+
+r r r r r r r r r r r r r r r r
+r b b b b b b b b b b b b b b r
+r b g B B B G b b b b b b b b r
+r b b b b b B b b b b G B G b r
+r b b G B B G b b b b B b b b r
+r b b B b b b b G B B G b b b r
+r b b B b _ _ b B b b b b b b r
+r b b B b _ _ b G B G b b b b r
+r b b B b b b b b b B b _ _ b r
+r b b G B B B B B B G b _ _ b r
+r b b b b b b b b b b b b b b r
+r r r r r r r r r r r r r r r r
