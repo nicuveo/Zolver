@@ -48,10 +48,6 @@ class Game
     void paint_ship_cell(Color c);
 
   private:
-    void allowed_insert(const Action& a, int arg = 0);
-    void board_colors_init(const std::set<Color>& colors);
-    void board_colors_init();
-
     ProgramSchema ps_;
     ColorSet p_colors_;
     ColorSet b_colors_;
