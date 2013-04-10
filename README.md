@@ -34,6 +34,19 @@ A major optimization that still needs to be done would be to make "Tester"
 classes stateless and use a thread pool to test several potential solutions at
 the same time.
 
+Known issues
+------------
+
+  * The *better tester* might report some valid programs as failures, due to
+    over-zealous stack loop detection (you might try `green.rbz` if you have a
+    few spare hours).
+
+  * The *better solver* will probably not find the most concise
+    solution. `faster_naive.rbz` is an illustration of this problem. This one,
+    however, might be an easy fix.
+
+  * The thread pooling upgrade is not yet implemented.
+
 Usage
 -----
 
