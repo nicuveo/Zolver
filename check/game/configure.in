@@ -1,0 +1,21 @@
+CFLAGS = -I../../src -W -Wall -Wextra -Werror -ansi -pedantic -g3 -ggdb3 --coverage
+LDFLAGS += --coverage
+LIBS =
+CFIL =                                    \
+    test.cc                               \
+    ../../src/game/board.cc               \
+    ../../src/game/cell.cc                \
+    ../../src/game/game.cc                \
+    ../../src/game/game_io.cc             \
+    ../../src/game/instruction.cc         \
+    ../../src/game/processor.cc           \
+    ../../src/game/program.cc             \
+    ../../src/game/ship.cc                \
+    ../../src/options.cc                  \
+    ../../src/parser.cc                   \
+    ../../src/solvers/basic_solver.cc     \
+    ../../src/solvers/better_solver.cc    \
+    ../../src/solvers/instruction_data.cc \
+    ../../src/solvers/solver.cc           \
+    ../../src/testers/basic_tester.cc     \
+    ../../src/testers/better_tester.cc    \

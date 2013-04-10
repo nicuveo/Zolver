@@ -1,0 +1,22 @@
+#! /bin/sh
+
+F1=`mktemp`
+F2=`mktemp`
+
+find src -type f -iname "*.cc" \! -regex ".*svn.*" | sort > $F1
+sed -n 's/^ \+\(.*\.cc\) *\\/\1/p' configure.in     | sort > $F2
+
+M1=`comm $F1 $F2 -1 -3`
+M2=`comm $F1 $F2 -2 -3`
+
+if [ ! -z "$M1" ] ; then
+    echo "Missing files:"
+    echo "$M1" | sed 's/^/  /'
+fi
+
+if [ ! -z "$M2" ] ; then
+    echo "Files not included:"
+    echo "$M2" | sed 's/^/  /'
+fi
+
+test -z "$M1" -a -z "$M2"

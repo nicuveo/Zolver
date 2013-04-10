@@ -1,26 +1,25 @@
 //
-// parser.hh for zolver
+// foreach.hh for zolver
 // Made by nicuveo <antoine.jp.leblanc@gmail.com>
 //
 
-#ifndef PARSER_HH_
-# define PARSER_HH_
+#ifndef FOREACH_HH_
+# define FOREACH_HH_
 
 
 
 //HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
 // Includes
 
-# include <string>
-# include "game/game.hh"
+# include <boost/foreach.hpp>
 
 
 
 //HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
-// Declarations
+// Macros
 
-Game read(const std::string& filename);
+# define foreach BOOST_FOREACH
 
 
 
-#endif /* !PARSER_HH_ */
+#endif /* !FOREACH_HH_ */

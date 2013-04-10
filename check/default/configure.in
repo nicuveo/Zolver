@@ -1,0 +1,4 @@
+CFIL = test.cc
+CFLAGS = -I../../src -W -Wall -Wextra -Werror -ansi -pedantic -g3 -ggdb3 --coverage
+LDFLAGS += --coverage
+LIBS =

@@ -1,26 +1,22 @@
 //
-// parser.hh for zolver
+// cell.cc for zolver
 // Made by nicuveo <antoine.jp.leblanc@gmail.com>
 //
-
-#ifndef PARSER_HH_
-# define PARSER_HH_
 
 
 
 //HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
 // Includes
 
-# include <string>
-# include "game/game.hh"
+#include "game/cell.hh"
 
 
 
 //HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
-// Declarations
+// Implementation
 
-Game read(const std::string& filename);
-
-
-
-#endif /* !PARSER_HH_ */
+Cell::Cell(Color color, bool star)
+  : star_(star), color_(color)
+{
+  assert(not star or color != color::NONE);
+}

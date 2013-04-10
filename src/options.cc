@@ -1,6 +1,6 @@
 //
 // options.cc for zolver
-// Made by nicuveo <crucuny@gmail.com>
+// Made by nicuveo <antoine.jp.leblanc@gmail.com>
 //
 
 
@@ -8,7 +8,6 @@
 //HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
 // Includes
 
-#include <cstdlib>
 #include "options.hh"
 
 

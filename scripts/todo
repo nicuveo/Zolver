@@ -1,0 +1,53 @@
+#! /usr/bin/env python2
+
+
+import os
+import re
+import fnmatch
+
+
+class TodoInfo:
+    def __init__(self, keyword, file, line, msg):
+        self.keyword = keyword
+        self.file = file
+        self.line = line
+        self.msg = msg
+
+    def __str__(self):
+        return "{0}:{1} {2}: {3}".format(self.file, self.line, self.keyword, self.msg)
+
+
+DIRS = ["src", "check"]
+EXTS = ["*.hh", "*.hxx", "*.cc"]
+KEYWORDS = ["TODO", "FIXME"]
+TODO = {}
+
+
+for rdir in DIRS:
+    for root, dirnames, filenames in os.walk(rdir):
+        for ext in EXTS:
+            for filename in fnmatch.filter(filenames, ext):
+                with open(os.path.join(root, filename)) as file:
+                    for line_i, line_t in enumerate(file):
+                        for keyword in KEYWORDS:
+                            mo = re.search("{0} +(.*?) *: (.*)".format(keyword), line_t)
+                            if (mo):
+                                group = mo.group(1)
+                                msg = mo.group(2)
+                                if not group in TODO:
+                                    TODO[group] = []
+                                TODO[group].append(TodoInfo(keyword, os.path.join(root, filename), line_i, msg))
+
+
+def print_group(gname):
+    print("[{0}]".format(gname))
+    for todo_info in TODO[gname]:
+        print "   ", todo_info
+
+GROUPS = sorted(TODO.keys())
+
+if len(GROUPS):
+    for group in GROUPS[:-1]:
+        print_group(group)
+        print
+    print_group(GROUPS[-1])

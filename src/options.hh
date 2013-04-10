@@ -1,6 +1,6 @@
 //
 // options.hh for zolver
-// Made by nicuveo <crucuny@gmail.com>
+// Made by nicuveo <antoine.jp.leblanc@gmail.com>
 //
 
 

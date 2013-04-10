@@ -1,0 +1,12 @@
+Makefile.rules
+gmon.out
+test
+*.o
+*.d
+*.out
+*.err
+*.gcno
+*.gcno
+*.gcov
+*.gcda
+*.info

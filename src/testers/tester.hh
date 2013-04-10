@@ -1,26 +1,30 @@
 //
-// parser.hh for zolver
+// tester.hh for zolver
 // Made by nicuveo <antoine.jp.leblanc@gmail.com>
 //
 
-#ifndef PARSER_HH_
-# define PARSER_HH_
+#ifndef TESTER_HH_
+# define TESTER_HH_
 
 
 
 //HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
 // Includes
 
-# include <string>
 # include "game/game.hh"
+# include "game/program.hh"
 
 
 
 //HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
 // Declarations
 
-Game read(const std::string& filename);
+class Tester
+{
+  public:
+    virtual bool test(const Game&, const Program&, int max) = 0;
+};
 
 
 
-#endif /* !PARSER_HH_ */
+#endif /* !TESTER_HH_ */

@@ -5,28 +5,54 @@
 
 ## Configuration
 profile: release
+sub-dirs: check
+prefix: /usr/local
 
 
 ## Defaults
-CC	= g++
-CFLAGS	= -W -Wall -Wextra
-DFLAGS  = -DDEBUG
-LDFLAGS = -lboost_program_options
+CC	  = g++
+CFLAGS	  = -W -Wall -Wextra -ansi -pedantic -I include -I src
+DFLAGS    = -O0 -g3 -ggdb3 -DDEBUG
+RFLAGS    = -O3 -DNDEBUG
+LDFLAGS   = -lboost_program_options
+LIBS      =
+LIBS_DIRS =
+TARGETS   = $(EXE)
+
+CFIL =                                  \
+	src/game/game.cc	        \
+	src/game/cell.cc	        \
+	src/game/ship.cc	        \
+	src/game/board.cc	        \
+	src/game/game_io.cc	        \
+	src/game/program.cc	        \
+	src/game/processor.cc	        \
+	src/game/instruction.cc	        \
+	src/testers/basic_tester.cc     \
+	src/testers/better_tester.cc    \
+	src/solvers/solver.cc	        \
+	src/solvers/basic_solver.cc     \
+	src/solvers/better_solver.cc    \
+	src/solvers/instruction_data.cc \
+	src/options.cc		        \
+	src/parser.cc		        \
+	src/main.cc		        \
 
 
 ## Debug
 [debug]
-	CFLAGS  += $(DFLAGS) -g3 -ggdb3
-	LDFLAGS += -g3 -ggdb3
+	CFLAGS  += $(DFLAGS) -pg
+	LDFLAGS += -pg
 
 ## Check
 [check]
-	CFLAGS  += $(DFLAGS) -ansi -pedantic -Werror
-
-## Release
-[release]
-	CFLAGS  += -DNDEBUG -O3 -fomit-frame-pointer
+	CFLAGS  += $(DFLAGS) -Werror
+	LDFLAGS  += -Werror
 
 ## Profiling
 [profiling]
-	CFLAGS  += -DNDEBUG -O2 -g3 -ggdb3
+	CFLAGS  += -g3 -ggdb3 -O2
+
+## Release
+[release]
+	CFLAGS += $(RFLAGS)

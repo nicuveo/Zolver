@@ -1,0 +1,6 @@
+#! /usr/bin/env bash
+
+BDIR=`dirname $0`/..
+cd $BDIR
+
+find src \! -path ".*svn.*" -regex ".*\.\(hh\|hxx\|cc\)" | sort -u

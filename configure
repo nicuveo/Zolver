@@ -13,8 +13,11 @@ block=""
 nonbl=""
 verbose="true"
 profile=""
-options=""
+coptions=""
+loptions=""
+moptions=""
 folders=""
+tocheck=""
 os=`uname -s`
 cc="cc"
 
@@ -86,8 +89,10 @@ usage()
     echo "usage: configure [options] [profile name]"
     echo "options:"
     echo "         -h    : print this help"
-    echo "         -q    : disable verbose mode"
-    echo "         -o arg: compilation options string"
+    echo "         -q    : quiet mode"
+    echo "         -o ARG: add ARG at the end of CFLAGS"
+    echo "         -l ARG: add ARG at the beginning of LDFLAGS"
+    echo "         -a ARG: add ARG at the end of Makefile.rules"
 }
 
 # getoptions
@@ -95,7 +100,7 @@ getoptions()
 {
     while [ $# -ne 0 ] ; do
 	if [ -z "`echo "$1" | sed -n '/^-/P'`" ] ; then
-	    if [ "$current" = "" ] ; then
+	    if [ -z "$profile" ] ; then
 		profile="$1"
 	    else
 		usage
@@ -111,12 +116,33 @@ getoptions()
 		    verbose="";;
 		"-o")
 		    if [ $# -eq 1 ] ; then
+			echo "!!! -o option takes an argument"
 			usage
-			echo "!!! -o option takes a argument"
 			exit 3
 		    fi
 		    shift
-		    cfil="$1";;
+		    coptions="$coptions $1";;
+		"-l")
+		    if [ $# -eq 1 ] ; then
+			echo "!!! -l option takes an argument"
+			usage
+			exit 3
+		    fi
+		    shift
+		    loptions="$loptions $1";;
+		"-a")
+		    if [ $# -eq 1 ] ; then
+			echo "!!! -a option takes an argument"
+			usage
+			exit 3
+		    fi
+		    shift
+                    if [ -z "$moptions" ] ; then
+                        moptions="$1"
+                    else
+		        moptions="$options
+$1"
+                    fi;;
 		*)
 		    usage
 		    echo "!!! $1 is not a valid option"
@@ -152,7 +178,14 @@ init()
 {
     getoptions "$@"
     getprofile
-    folders=`find ./*/ -name "configure.in" | sed 's/configure.in//'`
+
+    files=""
+    folders=""
+    tocheck=`getsysvalue configure.in sub-dirs`
+    if [ -n "$tocheck" ] ; then
+        files=`find $tocheck -name "configure.in" | tr "\n" " "`
+        folders=`find $tocheck -name "configure.in" | sed 's/configure.in//'`
+    fi
     block=`getblock configure.in "$profile"`
     nonbl=`getnonblock configure.in`
     base="$PWD"
@@ -178,6 +211,14 @@ print_os ()
     echo ""
     echo "## OS"
     echo "OS = $os"
+}
+
+print_prefix ()
+{
+    echo ""
+    echo ""
+    echo "## PREFIX"
+    echo "PREFIX = $1"
 }
 
 print_rule()
@@ -226,12 +267,6 @@ copymakefile()
     block=`getblock configure.in "$profile"`
     nonbl=`getnonblock configure.in`
     createrules
-
-    if [ -n "$verbose" ] ; then
-	echo ">>> Creating dependencies"
-    fi
-    rm -f Makefile.deps *.d > /dev/null 2>&1
-    make -k Makefile.deps > /dev/null 2>&1
 }
 
 
@@ -243,8 +278,16 @@ copymakefile()
 main()
 {
     checkcc
+
+    if [ -n "$verbose" ] ; then
+        echo ">>> Makefile.rules"
+    fi
     print_header "Makefile.rules" > Makefile.rules
     print_os >> Makefile.rules
+    prefix=`getsysvalue configure.in prefix`
+    if [ -n "$prefix" ] ; then
+        print_prefix "$prefix" >> Makefile.rules
+    fi
     createrules ./
 
     for folder in $folders ; do
@@ -254,11 +297,42 @@ main()
 	cd "$base"
     done
 
-    if [ -n "$options" ] ; then
-	echo "CFLAGS += $options" >> Makefile.rules
+    if [ -n "$moptions" -o -n "$coptions" -o -n "$loptions" ] ; then
+        echo "" >> Makefile.rules
+        echo "" >> Makefile.rules
+        echo "## command-line options" >> Makefile.rules
     fi
+    if [ -n "$moptions" ] ; then
+	echo "$moptions" >> Makefile.rules
+    fi
+    if [ -n "$coptions" ] ; then
+	echo "CFLAGS += $coptions" >> Makefile.rules
+    fi
+    if [ -n "$loptions" ] ; then
+	echo "LDFLAGS = $loptions \$(LDFLAGS)" >> Makefile.rules
+    fi
+
+    echo "" >> Makefile.rules
+    echo "" >> Makefile.rules
+    echo "## meta-rules" >> Makefile.rules
+
+    echo    ""                                    >> Makefile.rules
+    echo    "PROFILE = $profile"                  >> Makefile.rules
+    echo    "SUB_DIRS = $tocheck"                 >> Makefile.rules
+    echo    "BUILD_DIR = build/$profile"          >> Makefile.rules
+    echo -n "CONFIGURE_ARGS ="                    >> Makefile.rules
+
+    mkdir -p build/$profile
+
+    for arg in "$@" ; do
+        echo -n " \"$arg\""                       >> Makefile.rules
+    done
+
+    echo    ""                                    >> Makefile.rules
+    echo    ""                                    >> Makefile.rules
+    echo    "Makefile.rules: configure.in $files" >> Makefile.rules
 }
 
 # Calls
 init "$@"
-main
+main "$@"

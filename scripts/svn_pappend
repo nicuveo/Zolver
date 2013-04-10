@@ -1,0 +1,15 @@
+#! /usr/bin/env bash
+
+if [ $# -ne 3 ] ; then
+    echo "usage: $0 pname pvalue path"
+    exit 1
+fi
+
+n="$1"
+v="$2"
+p="$3"
+
+old="`svn pget "$n" "$p"`"
+
+svn pset "$n" "$old
+$v" "$p"

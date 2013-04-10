@@ -1,26 +1,26 @@
 //
-// parser.hh for zolver
+// point.hh for zolver
 // Made by nicuveo <antoine.jp.leblanc@gmail.com>
 //
 
-#ifndef PARSER_HH_
-# define PARSER_HH_
+#ifndef POINT_HH_
+# define POINT_HH_
 
 
 
 //HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
 // Includes
 
-# include <string>
-# include "game/game.hh"
+# include <utility>
+# include <algorithm>
 
 
 
 //HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
 // Declarations
 
-Game read(const std::string& filename);
+typedef std::pair<int, int> Point;
 
 
 
-#endif /* !PARSER_HH_ */
+#endif /* !POINT_HH_ */

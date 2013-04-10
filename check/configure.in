@@ -1,0 +1,62 @@
+## configure.in
+## Made by nicuveo for saw
+
+ANALYSE_OPTS = -o "-I ../src"
+COVERAGE_OPTS = -t zolver -o "--no-branch-coverage"
+COVERAGE_OUT = ../doc/coverage
+
+TESTS =                                \
+    game                               \
+
+CFIL =                                 \
+    ../src/game/action.hh              \
+    ../src/game/action.hxx             \
+    ../src/game/board.cc               \
+    ../src/game/board.hh               \
+    ../src/game/board.hxx              \
+    ../src/game/cell.cc                \
+    ../src/game/cell.hh                \
+    ../src/game/cell.hxx               \
+    ../src/game/color.hh               \
+    ../src/game/color.hxx              \
+    ../src/game/direction.hh           \
+    ../src/game/direction.hxx          \
+    ../src/game/game.cc                \
+    ../src/game/game.hh                \
+    ../src/game/game.hxx               \
+    ../src/game/game_io.cc             \
+    ../src/game/game_io.hh             \
+    ../src/game/instruction.cc         \
+    ../src/game/instruction.hh         \
+    ../src/game/instruction.hxx        \
+    ../src/game/point.hh               \
+    ../src/game/processor.cc           \
+    ../src/game/processor.hh           \
+    ../src/game/processor.hxx          \
+    ../src/game/program.cc             \
+    ../src/game/program.hh             \
+    ../src/game/program.hxx            \
+    ../src/game/ship.cc                \
+    ../src/game/ship.hh                \
+    ../src/game/ship.hxx               \
+    ../src/main.cc                     \
+    ../src/misc/foreach.hh             \
+    ../src/options.cc                  \
+    ../src/options.hh                  \
+    ../src/options.hxx                 \
+    ../src/parser.cc                   \
+    ../src/parser.hh                   \
+    ../src/solvers/basic_solver.cc     \
+    ../src/solvers/basic_solver.hh     \
+    ../src/solvers/better_solver.cc    \
+    ../src/solvers/better_solver.hh    \
+    ../src/solvers/instruction_data.cc \
+    ../src/solvers/instruction_data.hh \
+    ../src/solvers/solver.cc           \
+    ../src/solvers/solver.hh           \
+    ../src/solvers/solver.hxx          \
+    ../src/testers/basic_tester.cc     \
+    ../src/testers/basic_tester.hh     \
+    ../src/testers/better_tester.cc    \
+    ../src/testers/better_tester.hh    \
+    ../src/testers/tester.hh           \

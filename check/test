@@ -1,0 +1,513 @@
+#! /usr/bin/env bash
+
+set -u
+
+
+
+# shell utils
+
+test -t 1 && IS_TERM=true || IS_TERM=""
+
+R=${IS_TERM:+"\033[1;31m"}
+G=${IS_TERM:+"\033[1;32m"}
+Y=${IS_TERM:+"\033[1;33m"}
+B=${IS_TERM:+"\033[1;34m"}
+M=${IS_TERM:+"\033[1;35m"}
+C=${IS_TERM:+"\033[1;36m"}
+N=${IS_TERM:+"\033[0m"}
+
+
+
+# script constants
+
+CUR_DIR="`dirname $(readlink -f $0)`"
+DEFAULT_ADD_DIR="default"
+LOG_FILE="`basename $0`.log"
+ANA_FILE="analysis.log"
+COV_FILE="coverage.log"
+COV_OUT="coverage.info"
+
+STEP_ALIGN=66
+
+USAGE="\
+${B}usage:${N}
+    $0 -h
+    $0 [-q] [-n] cmd_name cmd_args
+
+${B}allowed commands:${N}
+    $0 [-q] [-n] add [-s] [-d pattern]                 tests...
+    $0 [-q] [-n] run [-e]                              tests...
+    $0 [-q] [-n] analyse  [-o opts]                    files...
+    $0 [-q] [-n] coverage [-o opts] [-t title] out_dir tests..."
+HELP="\
+${C}### Call syntax ###${N}
+
+$USAGE
+
+
+
+${C}### Global ###${N}
+
+This script manages the test suite. Each sub-command performs a specific sub-task.
+
+${B}global options:${N}
+    -h: print this help
+    -q: quiet mode
+    -n: dry-run
+
+
+
+${C}### Add ###${N}
+
+This commands adds a new test to the test suite. It creates the test using the pattern found in the specified directory. If the test already exists, this just resets its configuration.
+
+${B}add options:${N}
+    -s:         add the new test to svn
+    -d pattern: use specified pattern (default: '$DEFAULT_ADD_DIR')
+
+${B}add args:${N}
+    tests:      list of tests to add
+
+
+
+${C}### Run ###${N}
+
+This commands runs the given tests. For each given test:
+    * it compiles the test by running \`make\`
+    * it runs the build executable
+
+${B}run args:${N}
+    -e:    stops upon failure
+
+${B}run args:${N}
+    tests: list of tests to run
+
+
+
+${C}### Analyse ###${N}
+
+This commands runs a global static code analysis (using cppcheck) on the specified source files.
+
+${B}analyse options:${N}
+    -o opts: cppcheck options
+
+${B}analyse args:${N}
+    files:   list of source files to analyse
+
+
+
+${C}### Coverage ###${N}
+
+This commands generates code coverage analysis for the specified tests, in html form (using lcov and genhtml), in the specified output directory.
+
+${B}coverage options:${N}
+    -o opts:  lcov options
+    -t title: custom report title
+
+${B}coverage args:${N}
+    out_dir:  html export directory
+    tests:    list of tests to analyse"
+
+
+
+# global vars
+
+rargs=()
+command=""
+add_svn=""
+add_pattern="$DEFAULT_ADD_DIR"
+run_stop=""
+ana_options=""
+cov_options=""
+cov_outdir=""
+cov_title="code coverage"
+verb="true"
+appl="true"
+
+
+
+# tools
+
+verbose()
+{
+    test -n "$verb"
+}
+
+apply()
+{
+    test -n "$appl"
+}
+
+has()
+{
+    local bin="$1"
+
+    which "$bin" > /dev/null 2> /dev/null
+}
+
+run()
+{
+    local name="$1"
+    shift
+    local res=0
+
+    if verbose ; then
+        printf "%-${STEP_ALIGN}s" "[$command] $name"
+    fi
+    echo "################################" >> "$LOG_FILE"
+    echo "# $name"                          >> "$LOG_FILE"
+
+    if apply ; then
+        "$@" >> "$LOG_FILE" 2>&1
+        res=$?
+    fi
+
+    if verbose ; then
+        test $res -eq 0 && echo -e "[${G}OK${N}]" || echo -e "[${R}KO${N}]"
+    fi
+    echo -e "\n\n" >> "$LOG_FILE"
+
+    return $res
+}
+
+log()
+{
+    if verbose ; then
+        echo "[$command] $@" | tee -a "$LOG_FILE"
+    fi
+}
+
+log_e()
+{
+    if verbose ; then
+        echo -e "[$command] $@" | tee -a "$LOG_FILE"
+    fi
+}
+
+
+
+# add command
+
+add_params()
+{
+    OPTIND=1
+    while getopts "sd:" OPTION ; do
+        case "$OPTION" in
+            s) add_svn="true";;
+            d) add_pattern="$OPTARG";;
+            *) echo -e "\n$USAGE"; return 3;;
+        esac
+    done
+    shift $(($OPTIND - 1))
+
+    if [ $# -lt 1 ]; then
+        echo -e "$0: $command: missing tests arg\n\n$USAGE"
+        return 4
+    fi
+
+    if [ ! -d "$add_pattern" ] ; then
+        echo -e "$0: $command: no such pattern directory -- $add_pattern\n\n$USAGE"
+        return 5
+    fi
+
+    test $# -gt 0 && rargs=( "$@" ) || rargs=()
+}
+
+add_create_directory()
+{
+    local test="$1"
+
+    run "creating $test" mkdir -p "$test"
+}
+
+add_create_file()
+{
+    local test="$1"
+    local pattern="$2"
+    local file="$3"
+
+    sed "s%_test_subject_%$test%" < "$pattern/$file" > "$test/$file" || return $?
+}
+
+add_create_files()
+{
+    local test="$1"
+    local pattern="$2"
+    local pfile=""
+    local tfile=""
+
+    for file in `ls $pattern` ; do
+        if [ -r "$pattern/$file" -a -f "$pattern/$file" ] ; then
+            run "creating $test/$file" add_create_file "$test" "$pattern" "$file" || return $?
+        fi
+    done
+}
+
+add_register_svn()
+{
+    local test="$1"
+    local pattern="$2"
+
+    run "adding $test to svn" svn add "$test" || return $?
+
+    if [ -r "$pattern/.ignore" ] ; then
+        run "setting svn:ignore on $test" svn propset svn:ignore "`cat \"$pattern\"/.ignore`" "$test" || return $?
+    fi
+}
+
+add_cmd()
+{
+    add_params "$@" || return $?
+
+    for arg in "${rargs[@]-}" ; do
+        log "adding $arg"
+
+        add_create_directory "$arg" || return $?
+        add_create_files "$arg" "$add_pattern" || return $?
+
+        if [ -n "$add_svn" ] ; then
+            add_register_svn "$arg" "$add_pattern" || return $?
+        fi
+    done
+}
+
+
+
+# run command
+
+run_params()
+{
+    OPTIND=1
+    while getopts "e" OPTION ; do
+        case "$OPTION" in
+            e) run_stop="true";;
+            *) echo -e "\n$USAGE"; return 3;;
+        esac
+    done
+    shift $(($OPTIND - 1))
+
+    if [ $# -lt 1 ]; then
+        echo -e "$0: $command: missing tests arg\n\n$USAGE"
+        return 4
+    fi
+
+    test $# -gt 0 && rargs=( "$@" ) || rargs=()
+}
+
+run_make()
+{
+    local test="$1"
+
+    (cd "$test" && make > make.out 2> make.err)
+}
+
+run_test()
+{
+    local test="$1"
+
+    (cd "$test" && ./test > test.out 2> test.err)
+}
+
+run_cmd()
+{
+    local res=${#rargs[@]-}
+
+    run_params "$@" || return $?
+
+    for arg in "${rargs[@]-}" ; do
+        local root="../`echo "$arg" | sed 's%[^/]\+%..%g'`"
+
+        has lcov && run "$arg: cleaning coverage data" lcov -b "$root" -d "$arg" -z -q > /dev/null
+
+        if ! run "$arg: make" run_make "$arg"; then test -n "$run_stop" && return 5 || continue; fi
+        if ! run "$arg: test" run_test "$arg"; then test -n "$run_stop" && return 5 || continue; fi
+
+        let "res -= 1"
+    done
+
+    test $res -eq 0 || return 6
+}
+
+
+
+# analyse command
+
+ana_params()
+{
+    OPTIND=1
+    while getopts "o:" OPTION ; do
+        case "$OPTION" in
+            o) ana_options="$OPTARG";;
+            *) echo -e "\n$USAGE"; return 3;;
+        esac
+    done
+    shift $(($OPTIND - 1))
+
+    if [ $# -lt 1 ]; then
+        echo -e "$0: $command: missing files arg\n\n$USAGE"
+        return 4
+    fi
+
+    test $# -gt 0 && rargs=( "$@" ) || rargs=()
+}
+
+ana_run()
+{
+    echo cppcheck --enable=all -q $ana_options "${rargs[@]}"
+         cppcheck --enable=all -q $ana_options "${rargs[@]}" > "$ANA_FILE" 2>&1
+}
+
+ana_cmd()
+{
+    ana_params "$@" || return $?
+
+    if ! has cppcheck ; then
+        echo "$0: error: cppcheck not in path"
+        return 5
+    fi
+
+    run "global analysis (${#rargs[@]} files)" ana_run || return $?
+
+    if apply && [ -f "$ANA_FILE" -a -r "$ANA_FILE" ] ; then
+        local lines=`wc -l < $ANA_FILE`
+        local errors=`grep "(error)" $ANA_FILE | wc -l`
+        local warnings=`grep "(warning)" $ANA_FILE | wc -l`
+        local misc=$(( $lines - $errors - $warnings ))
+
+        run "    warnings: `printf '%5u' $warnings`" test $warnings -eq 0
+        run "    errors:   `printf '%5u' $errors`"   test $errors   -eq 0
+
+        if test $misc -ne 0 ; then
+            log_e "    misc:     $Y`printf '%5s' $misc`$N"
+        fi
+
+        test $warnings -eq 0 -a $errors -eq 0 || return 6
+    fi
+}
+
+
+
+# coverage command
+
+cov_params()
+{
+    OPTIND=1
+    while getopts "t:o:" OPTION ; do
+        case "$OPTION" in
+            t) cov_title="$OPTARG";;
+            o) cov_options="$OPTARG";;
+            *) echo -e "\n$USAGE"; return 3;;
+        esac
+    done
+    shift $(($OPTIND - 1))
+
+    if [ $# -lt 1 ]; then
+        echo -e "$0: $command: missing out_dir arg\n\n$USAGE"
+        return 4
+    fi
+    cov_outdir="$1"
+
+    shift
+    if [ $# -lt 1 ]; then
+        echo -e "$0: $command: missing tests arg\n\n$USAGE"
+        return 5
+    fi
+
+    test $# -gt 0 && rargs=( "$@" ) || rargs=()
+}
+
+cov_geninfo()
+{
+    local test="$1"
+
+    echo lcov -b "$test" -d "$test" -t "$test" -q -c -o "$test/cov.info" >> "$COV_FILE"
+         lcov -b "$test" -d "$test" -t "$test" -q -c -o "$test/cov.info" >> "$COV_FILE" 2>&1
+}
+
+cov_mixinfo()
+{
+    local opt="$1"
+    local root=$(dirname `pwd`)
+
+    echo lcov $opt -o "$COV_OUT" >> "$COV_FILE"
+         lcov $opt -o "$COV_OUT" >> "$COV_FILE" 2>&1
+    echo lcov -o "$COV_OUT" -e "$COV_OUT" "$root/src/*" "$root/include/*" >> "$COV_FILE"
+         lcov -o "$COV_OUT" -e "$COV_OUT" "$root/src/*" "$root/include/*" >> "$COV_FILE"
+}
+
+cov_genhtml()
+{
+    genhtml $cov_options -q --demangle-cpp --legend -t "$cov_title" -s -o "$cov_outdir" "$COV_OUT" >> "$COV_FILE" 2>&1
+}
+
+cov_cmd()
+{
+    cov_params "$@" || return $?
+
+    if ! has lcov || ! has genhtml ; then
+        echo "$0: error: lcov or genhtml not in path"
+        return 6
+    fi
+
+    local opts=()
+
+    run "removing previous log"  rm -f "$COV_FILE" > /dev/null
+    run "removing previous info" rm -f "$COV_OUT"  > /dev/null
+
+    for test in "${rargs[@]-}" ; do
+        run "aggregating data for $test" cov_geninfo "$test" || return $?
+        opts+=( "-a $test/cov.info" )
+    done
+
+    run "merging data"  cov_mixinfo "${opts[*]}" || return $?
+    run "making report" cov_genhtml              || return $?
+}
+
+
+
+# main
+
+main_params()
+{
+    OPTIND=1
+    while getopts "hnq" OPTION ; do
+        case "$OPTION" in
+            q) verb="";;
+            n) verb="true"; appl="";;
+            h) echo -e "$HELP"; exit 0;;
+            *) echo -e "\n$USAGE"; return 1;;
+        esac
+    done
+    shift $(($OPTIND - 1))
+
+    if [ $# -lt 1 ]; then
+        echo -e "$0: missing command\n\n$USAGE"
+        return 2
+    fi
+
+    command="`echo $1 | tr '[A-Z]' '[a-z]'`"
+    rargs=()
+    shift
+    test $# -gt 0 && rargs+=( "$@" )
+}
+
+main()
+{
+    main_params "$@" || return $?
+
+    case "$command" in
+        add)      add_cmd "${rargs[@]-}" || return $?;;
+        run)      run_cmd "${rargs[@]-}" || return $?;;
+        analyse)  ana_cmd "${rargs[@]-}" || return $?;;
+        coverage) cov_cmd "${rargs[@]-}" || return $?;;
+        *) echo -e "$0: illegal command -- $command\n\n$USAGE"; return 6;;
+    esac
+}
+
+
+
+# entry point
+
+cd "$CUR_DIR"
+date > "$LOG_FILE"
+main "$@"
